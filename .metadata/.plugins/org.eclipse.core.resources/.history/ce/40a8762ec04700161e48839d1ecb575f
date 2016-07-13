@@ -1,0 +1,166 @@
+package LHP;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
+
+import tools.GroupUtils;
+import tools.SimUtils;
+import repast.simphony.context.Context;
+import repast.simphony.engine.schedule.ScheduledMethod;
+import repast.simphony.random.RandomHelper;
+import repast.simphony.space.gis.Geography;
+import repast.simphony.space.grid.Grid;
+import repast.simphony.space.grid.GridPoint;
+import repast.simphony.util.ContextUtils;
+
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Geometry;
+
+public class Primate {
+
+	//primate level variables
+	Coordinate coordinate,foodTarget;
+	//ArrayList<Primate> groupMates;
+	List<Cell> visualPatches;
+	List<Primate> visualPartners;
+	Primate followMate;
+	Cell myPatch;
+	int id,actionTaken;
+	Gut myGut;
+	boolean blocked;
+	private double facing;
+	int noise;
+	int sex
+	Coordinate destination;
+	//double control_hunger = 0.0; 		//internal... simple: 1 - (food in gut / max gut size)
+	boolean control_hunger=false;
+	double control_social = 0.0; 		//social partners in sight f(time,true/false partner in view) stock and flow 
+	double control_exposure = 0.0;  	//uncertainty in sounds f(sound,visual), where sound increases uncertainty and visual inspection reduces uncertainty
+	double control_optForaging = 0.0;	//optimal foraging placement
+	double control_distMR = 0.0;	//optimal foraging placement
+	int socialCount = 0;
+
+
+	/****************************
+	 * 							*
+	 * Behaviours				*
+	 * 							*
+	 ****************************/
+
+	public void getInputs(){
+
+	}
+
+	public void behaviouralResponse(){
+
+	}
+
+	public void energyUpdate(){
+
+	}
+
+
+	/****************************
+	 * 							*
+	 * Get and set parameters	*
+	 * 							*
+	 ****************************/
+
+	public void setBaboonFollowerRand(Primate primate){
+		followMate=null;
+		System.out.println("I'm "+primate.id+" trying to find someone");
+		while(followMate == null){
+			followMate = ModelSetup.getAllPrimateAgents().iterator().next();
+			System.out.println("...looking at "+followMate.id);
+			if(followMate.id==primate.id)followMate=null;
+		}
+	}
+	public Primate getBaboonFollower(){
+		return followMate;
+	}
+	public void setBaboonFollowerLeader(){
+		Iterator<Primate> listP = ModelSetup.getAllPrimateAgentsInOrder().iterator();
+		listP.next();
+		listP.next();
+		followMate =  listP.next(); // Arbitrarily choose the third individual as the leader
+	}
+	public void setBaboonFollower(Integer idn){
+		
+		Primate pp = null;
+		for(Primate p:ModelSetup.orderedP){
+			if(p.getId()==idn)pp=p;
+		}
+		if(pp==null)System.out.println("Something wrong with the assignment of follower");
+		followMate = pp; // Arbitrarily choose the third individual as the leader
+	}
+	public int getId(){
+		return id;
+	}
+	public void setCoord(Coordinate c){
+		coordinate = c;
+	}
+	public Coordinate getCoord(){
+		return coordinate;
+	}
+	//public ArrayList<Primate> getGroupMates(){
+	//return groupMates;
+	//}
+	public List<Cell> getVisualPatches(){
+		return visualPatches;
+	}
+	public List<Primate> getVisualPartners(){
+		return visualPartners;
+	}
+	public void setCurrentAction(int i){
+		actionTaken = i;
+	}
+	public int getCurrentAction(){
+		return actionTaken;
+	}
+	public double getFacing(){
+		return facing;
+	}
+	public void setFacing(double d){
+		facing = d;
+		if(d>360*2){
+			System.out.println("something in facing methods");
+		}
+		if(facing>360)facing=facing-360;
+		if(facing<0)  facing=facing+360;
+	}
+	public boolean blocked(){
+		return blocked;
+	}
+	public void setBlocked(boolean i){
+		blocked = i;
+	}
+	public void setNoise(int i){
+		noise = i;
+	}
+	public int getNoise(){
+		return noise;
+	}
+	public double getControl_social(){
+		return control_social;
+	}
+	public double getControl_exposure(){
+		return control_exposure;
+	}
+	public double getControl_optForaging(){
+		return control_optForaging;
+	}
+	public double getControl_distCV(){
+		return control_distMR;
+	}
+	public void reduceSocialVariable(double d){
+		control_social = control_social - d;
+	}
+	public void reduceExposure(double d){
+		control_exposure = control_exposure - d;
+	}
+	public void setFoodTarget(Coordinate c){
+		foodTarget=c;
+	}
+}

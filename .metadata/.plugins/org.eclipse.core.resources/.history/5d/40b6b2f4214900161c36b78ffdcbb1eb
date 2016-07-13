@@ -1,0 +1,290 @@
+package tools;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import com.vividsolutions.jts.geom.Coordinate;
+
+import LHP.Cell;
+import LHP.Parameter;
+import LHP.Primate;
+
+public class AngleUtils {
+	
+	/*********************************************************************************
+	 * 
+	 * 1 - get middle angle								//passes 0 test and is reversible but when 180 degree difference will always give an upper quadrant measure for the middle (and will always take the middle of the lowest range)
+	 * 2 - get range angle				 				//passes 0 test and reversible angles test (max 180 degrees)
+	 * 3 - withinAngles									//passes 0 test and is reversible (facing above 0 and bellow 0 with target on either side works)
+	 * 4 - get inital angle (facing - vis arc/2)		//passes 0 test and is reversible
+	 * 5 - get final angle (facing + vis arc/2) 		//passes 0 test and is reversible
+	 * 6 - get angle (degrees)							//passes all quadrent tests (source to target)
+	 * 7 - getLargestVisualArc (open area)				//
+	 * 
+	 */
+
+	//(1)
+	public static double getMiddleAngle(double[] angles){ 
+
+		double mid=0;
+		
+		//does the span run over 0 degrees?
+		if(Math.abs(angles[0]-angles[1])>Parameter.visualArc+1){
+			double min = Math.min(angles[0],angles[1]);
+			double max = Math.max(angles[0],angles[1]);
+			min=min+360;
+			mid = (min+max)/2.0;
+			if(mid>360)mid=mid-360;
+			
+		//no it does not: simple case
+		} else {
+			mid=(angles[0]+angles[1])/2.0;
+			if(mid>360)mid=mid-360;
+		}
+		
+		return mid;
+	}
+	
+	
+	//(2)
+	public static double getRangeAngle(double[] angles){    
+		
+		double range=0; 
+		//does the span run over 0 degrees? 
+		if(Math.abs(angles[0]-angles[1])>Parameter.visualArc+1){
+			double minA = Math.min(angles[0],angles[1]);
+			double maxA = Math.max(angles[0],angles[1]);
+			
+			minA=minA+360;
+			range = (minA-maxA);
+
+		//no it does not: simple case
+		} else {
+			range=(angles[0]-angles[1]);
+		}
+		
+		return Math.abs(range);		
+	}
+	
+	//(3)
+	public static boolean withinAngles(double facing, double target){
+		boolean retval = false;
+		
+		//get range of vision
+		double[] angles = {getInitialAngle(facing),getFinalAngle(facing)};
+		
+		if(Math.abs(angles[0]-angles[1])>Parameter.visualArc+1){
+			double minA = Math.min(angles[0], angles[1]);
+			double maxA = Math.max(angles[0], angles[1]);
+			
+			minA=minA+360;
+			if(target<maxA)target+=360;
+			if(minA>target&&maxA<target)retval=true;
+			//angles[0]=angles[0]-360;
+		} else {
+			if(angles[0]>target&&angles[1]<target)retval=true;
+		}
+		
+		return retval;
+}
+	
+	//(4)
+	public static double getInitialAngle(double d){
+		
+		double initialAngle = 0;
+		
+		initialAngle = d+Parameter.visualArc/2.0;
+		
+		if(initialAngle>360)initialAngle=initialAngle-360;
+		return initialAngle;
+	}
+	
+	//(5)
+	public static double getFinalAngle(double d){
+		double endAngle = 0;
+		
+		endAngle = d-Parameter.visualArc/2.0;
+		
+		if(endAngle<0)endAngle=endAngle+360;
+		return endAngle;
+	}
+	
+	//(6)
+	public static float getAngle(Coordinate source, Coordinate target) {
+	    float angle = (float) (Math.atan2(target.y - source.y, target.x - source.x));
+
+	    if(angle < 0){
+	        angle += 2*Math.PI;
+	    }
+
+	    return (float) Math.toDegrees(angle);
+	}
+	
+	//(7)
+	public static double[] getLargestOpenArc(Primate primate){
+		
+		
+		double[] angles = new double[2];
+		ArrayList<Double> allAngles = new ArrayList<Double>();
+		
+		//get all angles (start and end are the limits to visual range)
+		double initalAngle = getInitialAngle(primate.getFacing());
+		double finalAngle = getFinalAngle(primate.getFacing());
+		angles[0] = initalAngle;
+		angles[1] = finalAngle;
+		
+		//add all angles 
+		List<Primate> visP = primate.getVisualPartners();
+		allAngles.add(initalAngle);
+		for(Primate p:visP){
+			allAngles.add((double) getAngle(primate.getCoord(),p.getCoord()));
+		}
+		allAngles.add(finalAngle);
+		
+		//order them
+		if(Math.abs(initalAngle-finalAngle)>Parameter.visualArc+1){
+			//crosses 0
+			double minA = Math.min(angles[0], angles[1]);
+			double maxA = Math.max(angles[0], angles[1]);
+			minA=minA+360;
+			
+			ArrayList<Double> allAnglesT = new ArrayList<Double>();
+			for(Double d:allAngles){
+				if(d<maxA)d=d+360;
+				allAnglesT.add(d);
+			}
+			//double rand = Math.random();
+			//if(rand > 0.5){
+				Collections.sort(allAnglesT,Collections.reverseOrder());	
+			//} else {
+			//	Collections.sort(allAnglesT);
+			//}
+			
+			//find the largest gap
+			double maxRange = 0,startA = allAnglesT.get(0),endA=0;
+			double maxAstart=0,maxAend=0;
+			for(Double d:allAnglesT){
+				endA=d;
+				double[] span = {startA,endA};
+				double distA = getRangeAngle(span);
+				if(distA>maxRange){
+					maxAstart=startA;
+					maxAend=endA;
+					maxRange=distA;
+				}
+				startA=endA;
+			}
+			
+			if(maxAstart>360)maxAstart=maxAstart-360;
+			if(maxAend>=360){
+				maxAend=maxAend-360;
+			}
+			angles[0]=maxAstart;
+			angles[1]=maxAend;
+			
+		} else {
+			//double rand = Math.random();
+			//if(rand > 0.5){
+				Collections.sort(allAngles,Collections.reverseOrder());	
+			//} else {
+			//	Collections.sort(allAngles);
+			//}
+
+			//find the largest gap
+			double maxA = 0,startA = allAngles.get(0),endA=0;
+			double maxAstart=0,maxAend=0;
+			for(Double d:allAngles){
+				endA=d;
+				double[] span = {startA,endA};
+				double distA = getRangeAngle(span);
+				if(distA>maxA){
+					maxAstart=startA;
+					maxAend=endA;
+					maxA=distA;
+				}
+				startA=endA;
+			}
+			angles[0]=maxAstart;
+			angles[1]=maxAend;
+		}
+		
+		if(visP.size()==0){
+			if(getMiddleAngle(angles)-primate.getFacing()>1){
+				System.out.println("Something is wrong here! "+ primate.getFacing() +"  is not equal to calculated middle "+getMiddleAngle(angles));
+			}
+		}
+		
+		return angles;
+	}
+
+	public static double turnToFaceTarget(double f, double a){
+
+		double diff=getRangeAngle(new double[] {f,a});
+		double newFacingA=0;
+		int turn = 0;
+		double behindMe = f-180;
+		if(behindMe<0)behindMe=behindMe+360;
+
+
+		if(diff>Parameter.turnSpeed){
+			
+			//find shortest direction to turn
+			if(a==behindMe){
+				turn = 1;
+				if(Math.random()>0.5)turn=-1;
+			} else if (f<=180) {
+				if(a>f && a<behindMe){
+					turn = 1;
+				} else {
+					turn = -1;
+				}
+			}	else{
+				if(a<f && a>behindMe){
+					turn=-1;
+				} else {
+					turn = 1;
+				}
+			}
+
+			newFacingA = f + turn*Parameter.turnSpeed;
+		} else {
+			newFacingA=a;
+		}
+
+		
+		/*
+		if(Math.abs(f-a)<180){
+			//simple case 
+			diff = (f-a);
+
+			if(Math.abs(diff)<Parameter.visualArc){
+				newFacingA = a;
+			} else {
+				if(diff>0)f=f-Parameter.turnSpeed;
+				if(diff<0)f=f+Parameter.turnSpeed;
+				newFacingA = f;
+			}
+
+		} else {
+			//spans the 360,0 mark
+			double minA = Math.min(f, a);
+			double maxA = Math.max(f, a);
+			diff =  (minA+360)-maxA;
+
+			if(Math.abs(diff)<Parameter.visualArc){
+				newFacingA = a;
+			} else {
+				if(f-a>0)f=f+Parameter.turnSpeed;
+				if(f-a<0)f=f-Parameter.turnSpeed;
+				newFacingA = f;
+			}
+		}
+		if(newFacingA==0){
+			System.out.println("somethingUp?");
+		}*/
+		
+		
+		return newFacingA;
+	}
+}

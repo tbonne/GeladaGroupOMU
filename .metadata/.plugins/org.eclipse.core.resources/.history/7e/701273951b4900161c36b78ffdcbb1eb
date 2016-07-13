@@ -1,0 +1,85 @@
+package LHP;
+
+import repast.simphony.engine.environment.RunEnvironment;
+import repast.simphony.parameter.Parameters;
+
+public class Parameter {
+	
+	final static Parameters p = RunEnvironment.getInstance().getParameters();
+	
+	//repast simphony
+	public final static String agent_context = "cellContext";
+	public final static String geog = "geog";
+	public static int randomSeed = 1847620; 			//adjusted in constructor
+	public static int numbOfThreads = 8;				//multipule of # of cores (e.g. 8 * 2 = 16)
+	public static boolean groupProcess = true;			//sub-groups of agents processed separately, or all agents passed through each separate process
+	
+	//Watcher agent (for observations)
+	public final static double stepsPerDay = 60*60*48;	//1 sec interval //each step represents 1 min (1min*60*12), for a total of 12hours of active time per day  //48*4
+	public final static int endDay = 1;		 			// will run the simulation until it has completed this many days
+	
+	//primate: capabilities
+	public static int groupSize = 10;
+	public static int numbOfGroups=10;
+	public static int maxInitialGroupDistance = 60;         //radius of the initial group (m) (starting conditions)
+	public static double foodAvoidanceDistance = 10;		//radius in which food is not selected for when a stranger is nearby (m)
+	
+	
+	public final static double maxDistancePerStep = 0.5; 	//distance (meter) that an individual can travel within one time-step (1sec)
+	public final static double bodyRadius = 4; 				//this is the physical space taken up by an agent (meters)
+	public final static int visualArc = 179;//90;				//visual field of a baboon
+	public final static double turnSpeed = 360;				//degrees turnign per second
+	//public final static double audioRange = 1000;			//distance at which others can be heard (estimates exposure)
+	//public static int foodSearchRange = 100;					//distance (meter) at which individuals can see resource grids
+	//public static int foragingRange = 10;
+	//public static double exposure_threshold = 4;			//individuals view (total arc not just visual focus)
+	public static double exposure_threshold = 0.85;			//mean resultant 0.8 
+	public static double redicedForagingSpeed = 1;			//speed is divided by this number when foraging
+	//public static double groupVisRange =	100;			//distance at which the agent can see other agents
+	public static double visual_range = 50;
+	public static int topologyNN = 4;
+	public static double minDist_MR = 1000;					//inter-individual distance threshold
+	public static double frontBlock_threshold=0.5;			//threshold for when an individual in front is blocking a food site 
+	
+	//Primate: energetics
+	public static double biteSize = 1;	//100*100				    //grams per second intake rate --> 1kg in 10,000s, 16min...?
+
+	//resources
+	public static double regrowthRate = 2000;		 			//regrowth of food in the environment //60*60
+	public static double foodDensity = 0.01;                 //avg number of food patches within 1m2 area
+	//public static double foodSD = foodDensity/8;			//sd of food (normal distribution - foodDensity, foodSD)
+	public static double food = 400;						//food value of each food site (grams) //400
+	public static int foodBuffer = 1;						//size of the food buffer in meters
+	//public static double envHetero  = 1;					//distribution of resources (lognormal) 
+	public static int landscapeWidth = 1000;				//width and length of the landscape meters /10000
+	//public static int numberOfPatches = 11;
+	//public static int patchSize = 5000;
+	
+	//assumptions
+	//foraging optimization moves at slower speeds than exposure minimization (1/2)
+	//measuring exposure by 1/dist2 rule (sound intensity decreases by the square of the distance... REF)
+	//responding to exposure by no distance rule (middle of sounds... still the center of the group though...)
+	//foraging is slower than reducing exposure (moves 1/4 as fast). There seems to be some neat dynamics as a result of the speed changes (more directional persistance the large the difference)
+	//random motion when no foraging options available: +-20
+	
+	//Constructor: used to set values from batch runs or the GUI
+	public Parameter(){
+		
+		randomSeed = (Integer)p.getValue("randomSeed");
+
+		//landscape
+		//cellSize = (Integer)p.getValue("cellSize");
+		//foodDensity = (Double)p.getValue("foodDensity");
+		//foodSD = (Double)p.getValue("envHetero");
+		//regrowthRate = (Double)p.getValue("regrowthRate");
+		
+		//energy balance
+		//biteSize = (Double)p.getValue("biteSize");
+		//targetEnergy_low = (Double)p.getValue("targetEnergy_low");
+		//foodDigestionRate = (Double)p.getValue("foodDigestionRate");
+		
+		//primate capabilities
+		//visual_range = (Integer)p.getValue("foodSearchRange");
+		
+	}
+}
