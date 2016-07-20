@@ -1,2 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<qualifiedTypeNameHistroy/>
+<qualifiedTypeNameHistroy>
+<fullyQualifiedTypeName name="java.util.Collections"/>
+<fullyQualifiedTypeName name="cern.jet.random.engine.MersenneTwister64"/>
+<fullyQualifiedTypeName name="LHP.Parameter"/>
+<fullyQualifiedTypeName name="cern.jet.random.VonMises"/>
+<fullyQualifiedTypeName name="org.apache.commons.math3.linear.ArrayRealVector"/>
+<fullyQualifiedTypeName name="org.apache.commons.math3.linear.RealVector"/>
+<fullyQualifiedTypeName name="java.util.ArrayList"/>
+<fullyQualifiedTypeName name="cern.jet.random.Beta"/>
+<fullyQualifiedTypeName name="com.vividsolutions.jts.geom.Envelope"/>
+<fullyQualifiedTypeName name="repast.simphony.util.collections.IndexedIterable"/>
+</qualifiedTypeNameHistroy>

@@ -19,7 +19,7 @@ public final strictfp class ForagingUtils {
 	 * 		(4)	chooseFoodSourceTowardsMyMigrationGoal()	- finds best site on way to my chosen site
 	 */
 
-
+/*
 	//(1)
 	//finds the best resource
 	public static Coordinate findBestUnknownFoodSource(Primate primate){//find the best unknown resource; all resources within search radius
@@ -75,12 +75,12 @@ public final strictfp class ForagingUtils {
 			} else {
 				i=1;
 			}
-			primate.setFacing(primate.getFacing()+(10*i));*/
+			primate.setFacing(primate.getFacing()+(10*i));///
 		}
 
 		return bestCloseSite;
 	}
-
+*/
 	/*public static Coordinate findBestUnknownFoodSource(Primate primate, Coordinate rand){//find the best unknown resource; all resources within search radius
 
 		//System.out.println("choosing unknown site");

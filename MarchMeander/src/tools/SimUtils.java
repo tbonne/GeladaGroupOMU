@@ -195,5 +195,18 @@ public final strictfp class SimUtils {
 		return testCoord;
 
 	}
+	
+	public static boolean occupied(Coordinate coord, int id){
+		boolean overlap = false;
+		for(Primate p:ModelSetup.getAllPrimateAgents()){
+			if(p.getId()!=id){
+				double dist = p.getCoord().distance(coord);
+				if(dist<=Parameter.foodBuffer){
+					overlap = true;
+				}
+			}
+		}
+		return overlap;
+	}
 
 }

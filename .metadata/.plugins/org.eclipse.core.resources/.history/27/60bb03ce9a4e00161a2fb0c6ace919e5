@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<parameters>
+	<parameter name="randomSeed" displayName="Default Random Seed"
+		type="int" defaultValue="__NULL__" isReadOnly="false"
+		converter="repast.simphony.parameter.StringConverterFactory$IntConverter" />
+	<parameter name="visual_range" displayName="visual_range"
+		type="java.lang.Double" defaultValue="50.0" isReadOnly="false"
+		converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter" />
+	<parameter name="foodDensity" displayName="Food density"
+		type="java.lang.Double" defaultValue="0.1" isReadOnly="false"
+		converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter" />
+	<parameter name="foodBuffer" displayName="Patch size" type="java.lang.Double"
+		defaultValue="1.0" isReadOnly="false"
+		converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter" />
+	<parameter name="biteSize" displayName="biteSize" type="java.lang.Double"
+		defaultValue="0.01" isReadOnly="false"
+		converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter" />
+	<parameter name="repulsionDistMax" displayName="repulsionDistMax"
+		type="java.lang.Double" defaultValue="10.0" isReadOnly="false"
+		converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter" />
+	<parameter name="landscapeWidth" displayName="landscapeWidth"
+		type="int" defaultValue="500" isReadOnly="false"
+		converter="repast.simphony.parameter.StringConverterFactory$IntConverter" />
+	<parameter name="landscapeHeight" displayName="landscapeHeight"
+		type="int" defaultValue="1000" isReadOnly="false"
+		converter="repast.simphony.parameter.StringConverterFactory$IntConverter" />
+	<parameter name="attractionDistMax" displayName="attractionDistMax"
+		type="java.lang.Double" defaultValue="10.0" isReadOnly="false"
+		converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter" />
+	<parameter name="foodWeight" displayName="foodWeight" type="java.lang.Double"
+		defaultValue="0.5" isReadOnly="false"
+		converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter" />
+	<parameter name="bearingWeight" displayName="bearingWeight"
+		type="java.lang.Double" defaultValue="1.0" isReadOnly="false"
+		converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter" />
+	<parameter name="repulsionWeight" displayName="repulsionWeight"
+		type="java.lang.Double" defaultValue="2.0" isReadOnly="false"
+		converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter" />
+	<parameter name="attractionWeight" displayName="attractionWeight"
+		type="java.lang.Double" defaultValue="2.0" isReadOnly="false"
+		converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter" />
+</parameters>
+
+

@@ -3,10 +3,10 @@ package tools;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
+import org.apache.commons.math3.linear.RealVector;
 import org.geotools.referencing.GeodeticCalculator;
 
 import repast.simphony.random.RandomHelper;
-
 import LHP.Baboon;
 import LHP.Cell;
 import LHP.Parameter;
@@ -98,7 +98,7 @@ public final strictfp  class MoveUtils {
 	}*/
 
 
-	public synchronized static boolean moveTo(Primate primate, Coordinate c){
+	/*public synchronized static boolean moveTo(Primate primate, Coordinate c){
 
 		boolean retval=false;
 		Coordinate newCoord = c;
@@ -118,9 +118,18 @@ public final strictfp  class MoveUtils {
 		}
 				
 		return retval;
+	}*/
+	
+	public synchronized static boolean moveTo(Primate primate, RealVector vecDest){
+
+		boolean retval=false;
+
+		ModelSetup.getGeog().moveByDisplacement(primate, vecDest.getEntry(0), vecDest.getEntry(1));
+				
+		return retval;
 	}
 	
-	
+	/*
 	public static boolean checkIfWayIsBlocked(Primate primate,Coordinate targetCoord){
 		boolean occupied=false;
 		for(Primate p:ModelSetup.primatesAll){
@@ -161,7 +170,7 @@ public final strictfp  class MoveUtils {
 			}
 		}
 		return overlap;
-	}
+	}*/
 
 
 	public static double getAngle(Coordinate source, Coordinate target) {
@@ -171,6 +180,15 @@ public final strictfp  class MoveUtils {
 			angle += 2*Math.PI;
 		}
 		return Math.toDegrees(angle);
+	}
+	
+	public static double getAngle(Coordinate source, Coordinate target, boolean rads) {
+		float angle = (float) (Math.atan2(target.y - source.y, target.x - source.x));
+
+		if(angle < 0){
+			angle += 2*Math.PI;
+		}
+		return angle;
 	}
 
 

@@ -15,5 +15,6 @@
 	<classpathentry kind="lib" path="lib/commons-math3-3.4.1.jar"/>
 	<classpathentry kind="lib" path="lib/jsc.jar"/>
 	<classpathentry kind="lib" path="lib/jxl.jar"/>
+	<classpathentry kind="lib" path="lib/colt-1.2.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

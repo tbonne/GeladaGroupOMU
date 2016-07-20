@@ -8,7 +8,7 @@ import org.geotools.referencing.GeodeticCalculator;
 
 import jsc.distributions.Lognormal;
 import jsc.distributions.Normal;
-
+import cern.jet.random.Beta;
 import cern.jet.random.Uniform;
 
 import com.vividsolutions.jts.geom.Coordinate;
@@ -81,9 +81,10 @@ public class ModelSetup implements ContextBuilder<Object>{
 		//Create Geometry factory; used to create gis shapes (points=primates; polygons=resources)
 		GeometryFactory fac = new GeometryFactory();
 
+
 		//x and y dims of the map file
 		int xdim = Parameter.landscapeWidth;
-		int ydim = Parameter.landscapeWidth;
+		int ydim = Parameter.landscapeHeight;
 
 		//Create Geography/GIS 
 		GeographyParameters<Object> params= new GeographyParameters<Object>();
@@ -92,16 +93,61 @@ public class ModelSetup implements ContextBuilder<Object>{
 		geog.setCRS("EPSG:32636"); //WGS 84 / UTM zone 36N EPSG:32636
 		gc = new GeodeticCalculator(geog.getCRS());
 
-		//Add Resources to the environment *****************************************//
+		//Add Resources to the environment ****************************************
+		
 		System.out.println("adding resources to the environment");
+		Beta beta = new Beta(Parameter.envHomogen,Parameter.envHomogen, Parameter.mt);
 		Uniform xDist = RandomHelper.createUniform(0, xdim);
 		Uniform yDist = RandomHelper.createUniform(0, ydim);
 		int count=0;
 		for(int i=0;i<Parameter.foodDensity*xdim*ydim;i++){
-			Cell cell = new Cell(context,xDist.nextDouble(),yDist.nextDouble(),Parameter.food,count++);
-			resAdded=resAdded+Parameter.food;
+			Cell cell = new Cell(context,xDist.nextDouble(),yDist.nextDouble(),beta.nextDouble(),count++);
 			sitesAdded++;
 			allCells.add(cell);
+		}
+		
+		/*
+		//adding hexagon grid cells
+		Beta beta = new Beta(Parameter.envHomogen,Parameter.envHomogen, Parameter.mt);
+		double xcoord=0,ycoord=0;
+		int offset=0,count=0;
+
+		for (int i = 0; i < ydim; ++i) {
+			for (int j = 0; j < xdim; ++j) {
+
+				//double food = 0;
+				double food = beta.nextDouble();
+				Cell cell=null;
+
+				if(offset==0){
+					xcoord=xcoord+(Parameter.cellSize/2.0)*Math.cos(2*Math.PI/3.0);
+					offset=1;
+					cell = new Cell(context,xcoord,ycoord,food,count++);
+					xcoord=xcoord-(Parameter.cellSize/2.0);
+				}else if (offset==1){
+					xcoord=xcoord-(Parameter.cellSize/2.0)*Math.cos(2*Math.PI/3.0);
+					ycoord=ycoord+(Parameter.cellSize/2.0)*Math.sin(2*Math.PI/3.0);
+					offset=0;
+					cell = new Cell(context,xcoord,ycoord,food,count++);
+					ycoord=ycoord-(Parameter.cellSize/2.0)*Math.sin(2*Math.PI/3.0);
+				}
+
+				resAdded=resAdded+food;
+				allCells.add(cell);
+
+				//shift ycoord by cell size value
+				xcoord=xcoord+Parameter.cellSize;
+			}
+
+			//Set ycoord back to the start and shift xcoord up by cell size value
+			xcoord=0;
+			ycoord = ycoord-(Parameter.cellSize)*Math.sin(2*Math.PI/3.0);
+		}
+		*/
+
+		//to simplify the model all cells record the visible neighbours (within visible range for a primate)
+		for (Cell c: allCells){
+			c.setVisibleNeigh();
 		}
 
 		/************************************
@@ -114,7 +160,7 @@ public class ModelSetup implements ContextBuilder<Object>{
 		ArrayList<Primate> group = new ArrayList<Primate>();
 
 		//center of group (fixed)
-		double xCenter =xdim/2;//0;//xDist.nextDouble();//75;//1000;// 75;
+		double xCenter =xdim/2;//*Parameter.cellSize/3;//0;//xDist.nextDouble();//75;//1000;// 75;
 		double yCenter =0;//0;//yDist.nextDouble();// -75;//-1000;//-75;
 
 		for(int i = 0 ;i<Parameter.numbOfGroups;i++ ){
@@ -123,10 +169,10 @@ public class ModelSetup implements ContextBuilder<Object>{
 			int groupSize = Parameter.groupSize;
 
 			boolean isMale = true;
-			
+
 			//add individuals
 			for (int j = 0; j < groupSize; j++){
-				
+
 				//add individual
 				Coordinate coord=SimUtils.generateCoordAround(xCenter,yCenter);
 				Baboon rc = new Baboon(primatesAdded++,coord,groupSize,isMale,i);
@@ -143,7 +189,7 @@ public class ModelSetup implements ContextBuilder<Object>{
 
 		//Add groupMates list (for simulation control)
 		for(Baboon p:primatesAll){
-			p.setPrimateList(primatesAll);
+			p.setPrimateList(new ArrayList(primatesAll));
 		}
 
 
@@ -156,9 +202,8 @@ public class ModelSetup implements ContextBuilder<Object>{
 		// Ordering processes
 		// (1) get inputs for agents						- threaded
 		// (2) behavioural responses of agents (movement) 	- threaded
-		// (3) behavioural responses of agents (energy)		- threaded
-		// (4) environment growback							- threaded
-		// (5) add/remove cells to modify					- not threaded
+		// (3) environment growback							- threaded
+		// (4) add/remove cells to modify					- not threaded
 
 		//executor takes care of the processing of the schedule
 		Executor executor = new Executor();
@@ -224,20 +269,8 @@ public class ModelSetup implements ContextBuilder<Object>{
 		return allCells;
 	}
 
-	public static Iterable<Baboon> getAllPrimateAgents(){
-		Collections.shuffle(primatesAll, new Random(System.currentTimeMillis()));
-		Iterable<Baboon> agents = primatesAll;
-		
-		if(primatesAll.size()!=previousListSize){
-			System.out.println("what!?!");
-		}
-		previousListSize=primatesAll.size();
-		
-		for(Baboon p: primatesAll){
-			//if(p.getId()==43)System.out.println("found you");
-		}
-		
-		return agents;
+	public synchronized static Iterable<Baboon> getAllPrimateAgents(){
+		return orderedP;
 	}
 
 	public static Context<Cell> getContext() {
