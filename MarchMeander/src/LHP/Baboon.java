@@ -35,7 +35,7 @@ public class Baboon extends Primate{
 		}
 		//groupMates = new ArrayList<Primate>();
 		destination = null;
-		this.setFacing(RandomHelper.nextDoubleFromTo(0, 360));
+		this.setFacing(RandomHelper.nextDoubleFromTo(-1, 1),RandomHelper.nextDoubleFromTo(-1, 1));
 		blocked=false;
 		foodTarget=null;
 		followMate=null;
@@ -300,7 +300,7 @@ public class Baboon extends Primate{
 	}
 
 	private synchronized void move(RealVector destination,boolean isCellSite){
-		//MoveUtils.moveToS((Primate)this, destination,0);
+		this.setFacing(this.getCoord().x+destination.getEntry(0),this.getCoord().y+destination.getEntry(1));
 		MoveUtils.moveTo((Primate)this, destination);
 		this.setCoord(ModelSetup.getAgentGeometry(this).getCoordinates()[0]);
 	}

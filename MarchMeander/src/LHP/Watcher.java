@@ -10,6 +10,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.linear.RealVector;
+
 import com.vividsolutions.jts.geom.Coordinate;
 
 import repast.simphony.engine.environment.RunEnvironment;
@@ -22,16 +25,16 @@ public class Watcher {
 	RunEnvironment runEnvironment;
 	BufferedWriter summaryStats_out,individualMovements_out,foodQuant_out,foodPos_out;//locations
 	List<Baboon> primateList;
-	ArrayList<Double> speeds,spreads;
+	ArrayList<Double> speeds,spreads,ratio;
 	ArrayList<Coordinate> centers;
 	static ArrayList<ArrayList> indPositions,foodQuant;
 	static ArrayList<Double> foodPosX,foodPosY;
 	double hour;
-	
+
 
 	//output stats
 	Coordinate lastCenter;
-	
+
 	//resolution reduction 
 	//final static double scale = 6.8411;//6.687;//3.800;//6.505;//6.2800;//5.586;//4.895;//6.0980;  //6
 	//final static double shape = 0.5955;  //0.6
@@ -39,13 +42,14 @@ public class Watcher {
 	//int countSteps=0;
 	//Long revisit=null;
 
-	
+
 	public Watcher(Executor exe){
 
 		executor = exe;
 		runEnvironment = RunEnvironment.getInstance();
 		primateList = ModelSetup.primatesAll;
 		speeds = new ArrayList<Double>();
+		ratio = new ArrayList<Double>();
 		spreads = new ArrayList<Double>();
 		centers = new ArrayList<Coordinate>();
 		indPositions = new ArrayList<ArrayList>();
@@ -53,7 +57,7 @@ public class Watcher {
 		foodPosX = new ArrayList<Double>();
 		foodPosY = new ArrayList<Double>();
 		foodQuant = new ArrayList<ArrayList>();
-		
+
 
 		Collections.sort(primateList,new CustomComparator());
 		for(Primate p : primateList){
@@ -74,7 +78,7 @@ public class Watcher {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 		//logNDist = new LogNormalDistribution(scale,shape);
 	}
 
@@ -89,29 +93,30 @@ public class Watcher {
 	public void step(){
 
 		//	to do every tick
-		
+
 		//countSteps=countSteps+1;
 		//if(revisit==null)revisit=Math.round(logNDist.sample()); can't down-sample this way as it assumes that all positions are recorded at the same time... no interpolation error introduced.
 		//if(countSteps==revisit){
-			//recordIndividualPositions();
-			//recordFood();
+		//recordIndividualPositions();
+		//recordFood();
 		//	revisit=null;
 		//	countSteps=0;
 		//}
-		
+
 
 		//	to do every minute
 		if(RunEnvironment.getInstance().getCurrentSchedule().getTickCount()%(60)==0){
-		//	Coordinate groupCenter = calculateGroupCenter();
-		//	centers.add(groupCenter);
-		//	speeds.add(calculateSpeed(groupCenter));
-		//	spreads.add(calculateSpread(groupCenter));
+			Coordinate groupCenter = calculateGroupCenter();
+			centers.add(groupCenter);
+			speeds.add(calculateSpeed(groupCenter));
+			spreads.add(calculateSpread(groupCenter));
+			ratio.add(calculateLegthWidthRatio());
 		}
 
-		//	to do every hour
-		if(RunEnvironment.getInstance().getCurrentSchedule().getTickCount()%(60*60)==0){
+		//	to do every 1000 steps
+		if(RunEnvironment.getInstance().getCurrentSchedule().getTickCount()%(1000)==0){
 			//System.out.println("End of hour "+ hour);
-		//	System.out.println(" ");
+			//System.out.println(" ");
 			hour++;
 		}
 
@@ -119,18 +124,18 @@ public class Watcher {
 		if(RunEnvironment.getInstance().getCurrentSchedule().getTickCount()>=Parameter.stepsPerDay*Parameter.endDay){
 			executor.shutdown();
 			RunEnvironment.getInstance().endAt(this.runEnvironment.getCurrentSchedule().getTickCount());
-		//	recordSummaryStats();
-		//	recordIndPosisions();
-		//	recordFoodPo();
-		//	recordFood_txt();
-		//	closeBufferWiter();
-		//	closeBufferWiter2();
-		//	printSocialCounts();
+			//	recordSummaryStats();
+			//	recordIndPosisions();
+			//	recordFoodPo();
+			//	recordFood_txt();
+			//	closeBufferWiter();
+			//	closeBufferWiter2();
+			//	printSocialCounts();
 			System.out.println("End of day");
 			//exportLandscape();
 		}
 	}
-	
+
 	//private void printSocialCounts(){
 	//	
 	//	for(Primate p : ModelSetup.orderedP){
@@ -142,17 +147,90 @@ public class Watcher {
 	private double calculateSpeed(Coordinate groupCenter){
 
 		double speed=-1;
-		
+
 		if(lastCenter!=null){
 			speed = groupCenter.distance(lastCenter)/1;
 		} 
-		
+
 		lastCenter = groupCenter;
-				
+
 		return speed;
 	}
-	
-	
+
+	private double calculateLegthWidthRatio(){
+
+		double lengthWidth = -1;
+
+		//get all individuals from focal group
+		ArrayList<Primate> group = new ArrayList<Primate>();
+		for(Primate p : primateList){
+			if(p.getMyGroup()==0)group.add(p);
+		}
+
+		//getGroupCenter
+		Coordinate center = calculateGroupCenter();
+
+		//get direction of travel
+		double xsum=0, ysum=0;
+		for(Primate g: group){
+			xsum=xsum+g.getFacing().getEntry(0);
+			ysum=ysum+g.getFacing().getEntry(1);
+		}
+		RealVector directionOfTravel = new ArrayRealVector(2,0);
+		directionOfTravel.addToEntry(0, xsum/(double)group.size());
+		directionOfTravel.addToEntry(1, ysum/(double)group.size());
+		
+		System.out.println("Direction of travel of the group = "+directionOfTravel.toString());
+
+
+		//subtract all the points towards the center and rotate
+		ArrayList<RealVector> rotatedPoints = new ArrayList<RealVector>();
+		for(Primate g: group){
+
+			//create a vector for the individual based on location from the center
+			double x = g.getCoord().x-center.x;
+			double y = g.getCoord().y-center.y;
+			double fie = Math.atan2(y, x);
+
+			RealVector p1 = new ArrayRealVector(2,0);
+			p1.addToEntry(0,x*Math.cos(fie) - y*Math.sin(fie) );
+			p1.addToEntry(1, y*Math.cos(fie) + x*Math.sin(fie));
+
+			rotatedPoints.add(p1);
+
+		}
+
+		/*//Calculate the ratio of length to width based on max
+		double maxX=-99999, minX=99999, maxY = -999999, minY=999999;
+		for(RealVector v : rotatedPoints){
+
+			double x = v.getEntry(0);
+			double y = v.getEntry(1);
+
+			if(x>maxX)maxX=x;
+			if(x<minX)minX=x;
+			if(y>maxY)maxY=y;
+			if(y<minY)minY=y;
+
+		}
+
+		lengthWidth = (maxY-minY)/(maxX-minX);
+		 */
+		
+		//Calculate the ratio of length to width based on SD
+		double SDx=0,SDy=0;//mean = 0;
+		for(RealVector v : rotatedPoints){
+			SDx = SDx+Math.pow(0-v.getEntry(0),2);
+			SDy = SDy+Math.pow(0-v.getEntry(1),2);
+		}
+
+		lengthWidth = (SDy)/(SDx);//N cancels out
+
+		return lengthWidth;
+
+	}
+
+
 	private static void recordFood(){
 		ArrayList foodT = new ArrayList<Double>();
 		for(Cell c: ModelSetup.allCells){
@@ -160,15 +238,15 @@ public class Watcher {
 		}
 		foodQuant.add(foodT);
 	}
-	
+
 	private static void recordFoodPo(){
-		
+
 		for(Cell c: ModelSetup.allCells){
 			foodPosX.add(c.getCoord().x);
 			foodPosY.add(c.getCoord().y);
 		}
 	}
-	
+
 	private void recordFood_txt(){
 		try {
 			int count=0;
@@ -180,23 +258,23 @@ public class Watcher {
 				}
 				foodQuant_out.newLine();
 			}
-			
+
 			for(int k = 0 ; k < foodPosX.size();k++){
 				foodPos_out.append(((Double)foodPosX.get(k)).toString());
 				foodPos_out.append(",");
 				foodPos_out.append(((Double)foodPosY.get(k)).toString());
 				foodPos_out.newLine();
 			}
-			
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 		try {
-			
+
 			foodQuant_out.flush();
 			foodQuant_out.close();
-			
+
 			foodPos_out.flush();
 			foodPos_out.close();
 		} catch (IOException e) {
@@ -211,8 +289,14 @@ public class Watcher {
 		double yCoordAvg=0;
 		double numbPrimates=0;
 
+		//get all individuals from focal group
+		ArrayList<Primate> group = new ArrayList<Primate>();
+		for(Primate p : primateList){
+			if(p.getMyGroup()==0)group.add(p);
+		}
+
 		//calculate their average x and y coordinates
-		for (Primate p: ModelSetup.primatesAll){
+		for (Primate p: group){
 			xCoordAvg = xCoordAvg + p.getCoord().x;
 			yCoordAvg = yCoordAvg + p.getCoord().y;
 			numbPrimates++;
@@ -224,7 +308,7 @@ public class Watcher {
 		//return the center coordinate
 		return new Coordinate(xCoordAvg,yCoordAvg);
 	}
-	
+
 	private static void recordIndividualPositions(){
 		ArrayList<Double> positions = new ArrayList<Double>();
 		for (Primate p: ModelSetup.orderedP){
@@ -235,15 +319,15 @@ public class Watcher {
 	}
 
 	private double calculateSpread(Coordinate groupCenter){
-		
+
 		double MSE_dist=-1;
 		int numbPrimates=0;
-		
+
 		for (Primate p: ModelSetup.primatesAll){
 			MSE_dist = MSE_dist + Math.pow(p.getCoord().distance(groupCenter),2);
 			numbPrimates++;
 		}
-		
+
 		return MSE_dist/numbPrimates;
 	}
 
@@ -266,7 +350,7 @@ public class Watcher {
 					count++;
 					//time
 					individualMovements_out.append(((Integer)i).toString());
-					
+
 					//new line
 					individualMovements_out.newLine();
 				}
@@ -278,9 +362,9 @@ public class Watcher {
 		}
 		flushBufferWriter2();
 	}
-	
-	
-	
+
+
+
 	private void recordSummaryStats() {
 
 		double avg_speed=0,avg_spread=0;
@@ -293,9 +377,9 @@ public class Watcher {
 			avg_speed = avg_speed + d;
 		}
 		avg_speed = avg_speed / speeds.size();
-		
+
 		System.out.println("speed = "+avg_speed+"  spread = "+avg_spread);
-		
+
 		try {
 			for(int i = 0 ; i<centers.size();i++){
 				summaryStats_out.append(((Double)centers.get(i).x).toString());
@@ -319,12 +403,12 @@ public class Watcher {
 		try {
 			summaryStats_out.newLine();
 			summaryStats_out.flush();
-			
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
-	
+
 	private void flushBufferWriter2(){
 		try {
 			individualMovements_out.newLine();
@@ -342,7 +426,7 @@ public class Watcher {
 			e.printStackTrace();
 		}
 	}
-	
+
 	private void closeBufferWiter2(){
 		try {
 			individualMovements_out.flush();

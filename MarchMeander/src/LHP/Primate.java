@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
 import cern.jet.random.VonMises;
@@ -21,7 +22,7 @@ public class Primate {
 	Cell myPatch;
 	int id;
 	boolean blocked;
-	private double facing;
+	private RealVector facing;
 	int sex;
 	Coordinate destination;
 	int myGroup;
@@ -86,16 +87,13 @@ public class Primate {
 	public List<Primate> getVisualPartners(){
 		return visualPartners;
 	}
-	public double getFacing(){
+	public RealVector getFacing(){
 		return facing;
 	}
-	public void setFacing(double d){
-		facing = d;
-		if(d>360*2){
-			System.out.println("something in facing methods");
-		}
-		if(facing>360)facing=facing-360;
-		if(facing<0)  facing=facing+360;
+	public void setFacing(double x, double y){
+		facing = new ArrayRealVector(2,0);
+		facing.addToEntry(0, x);
+		facing.addToEntry(1, y);
 	}
 	public boolean blocked(){
 		return blocked;
