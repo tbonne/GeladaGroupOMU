@@ -16,5 +16,10 @@
 	<classpathentry kind="lib" path="lib/jsc.jar"/>
 	<classpathentry kind="lib" path="lib/jxl.jar"/>
 	<classpathentry kind="lib" path="lib/colt-1.2.0.jar"/>
+	<classpathentry kind="var" path="ARCGIS_RUNTIME_FOR_JAVA_TOOLKIT/ArcGIS_Runtime_Java_Toolkit.jar" sourcepath="ARCGIS_RUNTIME_FOR_JAVA_TOOLKIT/ArcGIS_Runtime_Java_Toolkit-sources.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:file:C:\RepastSimphony-2.3.1\eclipse\configuration\org.eclipse.osgi\496\0\.cp\lib\/ArcGIS_Runtime_Java_Toolkit-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

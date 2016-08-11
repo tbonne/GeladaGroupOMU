@@ -90,10 +90,18 @@ public class Primate {
 	public RealVector getFacing(){
 		return facing;
 	}
-	public void setFacing(double x, double y){
-		facing = new ArrayRealVector(2,0);
-		facing.addToEntry(0, x);
-		facing.addToEntry(1, y);
+	public double getFacingX(){
+		return facing.getEntry(0);
+	}
+	public double getFacingY(){
+		return facing.getEntry(1);
+	}
+	public void setFacing(RealVector rv){
+		//facing = new ArrayRealVector(2,0);
+		//facing.addToEntry(0, x);
+		//facing.addToEntry(1, y);
+		facing = rv;
+		facing.unitize();
 	}
 	public boolean blocked(){
 		return blocked;

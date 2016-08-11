@@ -125,6 +125,7 @@ public final strictfp  class MoveUtils {
 		boolean retval=false;
 
 		ModelSetup.getGeog().moveByDisplacement(primate, vecDest.getEntry(0), vecDest.getEntry(1));
+		//ModelSetup.getGeog().moveByDisplacement(primate, 0, -0.1);
 				
 		return retval;
 	}

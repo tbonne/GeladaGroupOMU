@@ -25,7 +25,7 @@ public class Watcher {
 	RunEnvironment runEnvironment;
 	BufferedWriter summaryStats_out,individualMovements_out,foodQuant_out,foodPos_out;//locations
 	List<Baboon> primateList;
-	ArrayList<Double> speeds,spreads,ratio;
+	ArrayList<Double> speeds,spreads,ratio,perpen,shapeRatio;
 	ArrayList<Coordinate> centers;
 	static ArrayList<ArrayList> indPositions,foodQuant;
 	static ArrayList<Double> foodPosX,foodPosY;
@@ -34,14 +34,6 @@ public class Watcher {
 
 	//output stats
 	Coordinate lastCenter;
-
-	//resolution reduction 
-	//final static double scale = 6.8411;//6.687;//3.800;//6.505;//6.2800;//5.586;//4.895;//6.0980;  //6
-	//final static double shape = 0.5955;  //0.6
-	//static LogNormalDistribution logNDist;
-	//int countSteps=0;
-	//Long revisit=null;
-
 
 	public Watcher(Executor exe){
 
@@ -57,6 +49,8 @@ public class Watcher {
 		foodPosX = new ArrayList<Double>();
 		foodPosY = new ArrayList<Double>();
 		foodQuant = new ArrayList<ArrayList>();
+		perpen = new ArrayList<Double>();
+		shapeRatio = new ArrayList<Double>();
 
 
 		Collections.sort(primateList,new CustomComparator());
@@ -71,10 +65,10 @@ public class Watcher {
 		//creating a file to store the output of the counts
 		try {
 			//locations = new BufferedWriter(new FileWriter("C:/Users/t-work/Dropbox/Projects_with_LouisePeter/Project_Babbon_group_cordination_models_(specificFocus)/Project_simple_to_complex_models_min_requirments/runingABM/Primate_locations"+Parameter.decisionMaking+"_"+Parameter.associationSize+".csv",false));
-			summaryStats_out = new BufferedWriter(new FileWriter("C:/Users/t-work/Dropbox/Projects_with_LouisePeter/Project_Babbon_group_cordination_models_(specificFocus)/Project_simple_to_complex_models_min_requirments/runingABM/summary_stats.csv",false));
-			individualMovements_out = new BufferedWriter(new FileWriter("C:/Users/t-work/Dropbox/Projects_with_LouisePeter/Project_Babbon_group_cordination_models_(specificFocus)/Project_simple_to_complex_models_min_requirments/runingABM/movement_stats.csv",false));
-			foodQuant_out = new BufferedWriter(new FileWriter("C:/Users/t-work/Dropbox/Projects_with_LouisePeter/Project_Babbon_group_cordination_models_(specificFocus)/Project_simple_to_complex_models_min_requirments/runingABM/food_quant.csv",false));
-			foodPos_out = new BufferedWriter(new FileWriter("C:/Users/t-work/Dropbox/Projects_with_LouisePeter/Project_Babbon_group_cordination_models_(specificFocus)/Project_simple_to_complex_models_min_requirments/runingABM/food_pos.csv",false));
+			summaryStats_out = new BufferedWriter(new FileWriter("C:/Users/t-work/Dropbox/Tyler_MSS/GeladaOMU_Model/results/summary_stats_"+Parameter.numbOfGroups+"_OMU.csv",false));
+			//individualMovements_out = new BufferedWriter(new FileWriter("C:/Users/t-work/Dropbox/Projects_with_LouisePeter/Project_Babbon_group_cordination_models_(specificFocus)/Project_simple_to_complex_models_min_requirments/runingABM/movement_stats.csv",false));
+			//foodQuant_out = new BufferedWriter(new FileWriter("C:/Users/t-work/Dropbox/Projects_with_LouisePeter/Project_Babbon_group_cordination_models_(specificFocus)/Project_simple_to_complex_models_min_requirments/runingABM/food_quant.csv",false));
+			//foodPos_out = new BufferedWriter(new FileWriter("C:/Users/t-work/Dropbox/Projects_with_LouisePeter/Project_Babbon_group_cordination_models_(specificFocus)/Project_simple_to_complex_models_min_requirments/runingABM/food_pos.csv",false));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -105,12 +99,15 @@ public class Watcher {
 
 
 		//	to do every minute
-		if(RunEnvironment.getInstance().getCurrentSchedule().getTickCount()%(60)==0){
+		if(RunEnvironment.getInstance().getCurrentSchedule().getTickCount()%(Parameter.recordingFreq)==0){
 			Coordinate groupCenter = calculateGroupCenter();
 			centers.add(groupCenter);
 			speeds.add(calculateSpeed(groupCenter));
 			spreads.add(calculateSpread(groupCenter));
-			ratio.add(calculateLegthWidthRatio());
+			//ratio.add(calculateLegthWidthRatio());
+			perpen.add(this.calculateDiffAngle(this.getDirectionOfTravel().getEntry(1)/this.getDirectionOfTravel().getEntry(0), this.calculateSlopeOfEllipse().getEntry(1)/this.calculateSlopeOfEllipse().getEntry(0)));
+			shapeRatio.add(this.calculateShape(Math.atan2(this.calculateSlopeOfEllipse().getEntry(1), this.calculateSlopeOfEllipse().getEntry(0))));
+			System.out.println("step");
 		}
 
 		//	to do every 1000 steps
@@ -124,7 +121,7 @@ public class Watcher {
 		if(RunEnvironment.getInstance().getCurrentSchedule().getTickCount()>=Parameter.stepsPerDay*Parameter.endDay){
 			executor.shutdown();
 			RunEnvironment.getInstance().endAt(this.runEnvironment.getCurrentSchedule().getTickCount());
-			//	recordSummaryStats();
+				recordSummaryStats();
 			//	recordIndPosisions();
 			//	recordFoodPo();
 			//	recordFood_txt();
@@ -157,6 +154,138 @@ public class Watcher {
 		return speed;
 	}
 
+	
+
+	private RealVector getDirectionOfTravel(){
+
+		double direction=0;
+		//get all individuals from focal group
+		ArrayList<Primate> group = new ArrayList<Primate>();
+		for(Primate p : primateList){
+			if(p.getMyGroup()==0)group.add(p);
+		}
+
+		//get direction of travel
+		double xsum=0, ysum=0;
+		for(Primate g: group){
+			xsum=xsum+g.getFacing().getEntry(0);
+			ysum=ysum+g.getFacing().getEntry(1);
+		}
+		RealVector directionOfTravel = new ArrayRealVector(2,0);
+		directionOfTravel.addToEntry(0, xsum/(double)group.size());
+		directionOfTravel.addToEntry(1, ysum/(double)group.size());
+
+		//System.out.println("Direction of travel of the group = "+directionOfTravel.toString());
+		directionOfTravel.unitize();
+		System.out.println("Direction of travel of the group unit vector = "+directionOfTravel.toString());
+		//direction = Math.atan2(directionOfTravel.getEntry(1), directionOfTravel.getEntry(0));
+		
+		
+		return directionOfTravel;
+	}
+
+	private RealVector calculateSlopeOfEllipse(){
+
+		//get all individuals from focal group
+		ArrayList<Primate> group = new ArrayList<Primate>();
+		for(Primate p : primateList){
+			if(p.getMyGroup()==0)group.add(p);
+		}
+
+		//getGroupCenter
+		Coordinate center = calculateGroupCenter();
+
+		//calculate angle of ellipse (source arcgis standard deviation ellipse)
+		double A = 0,B=0,C=0;
+
+		double xdist2 = 0,ydist2=0, ydistxdist=0;
+		for(Primate g: group){
+			//individual location based on the center of the group
+			xdist2 = xdist2+ Math.pow(g.getCoord().x-center.x,2);
+			ydist2 = ydist2+ Math.pow(g.getCoord().y-center.y,2);
+			ydistxdist = ydistxdist + (g.getCoord().x-center.x)*(g.getCoord().y-center.y);
+		}
+
+		A = xdist2-ydist2;
+
+		B = Math.pow( Math.pow(A,2) + 4*(Math.pow(ydistxdist, 2)), 0.5);
+
+		C = 2*ydistxdist;
+
+		double slope = Math.atan((A+B)/C);
+		
+		RealVector slopeE = new ArrayRealVector(2,0);
+		slopeE.addToEntry(1, A+B);
+		slopeE.addToEntry(0, C); 
+
+		return slopeE;
+	}
+	
+	private double calculateDiffAngle(double slopeD, double slopeE){
+		double angleD=Math.atan(slopeD);
+		//slopeD = 10000;
+		double angleE=Math.atan(slopeE);
+		double diff = angleD-angleE;
+		double diff2 = Math.atan((slopeD-slopeE)/(1+slopeD*slopeE));
+		diff2 =  ((Math.PI/2.0)-Math.abs(diff2))/(Math.PI/2.0);
+		if(Double.isNaN(diff2)==true && diff == 0)diff2=0;
+		
+		System.out.println("SlopeD = "+slopeD+",  SlopeE = "+slopeE);
+		System.out.println("perpend = "+diff2);
+		
+		return diff2;
+	}
+
+	private double calculateShape(Double angleE){
+
+		//get all individuals from focal group
+		ArrayList<Primate> group = new ArrayList<Primate>();
+		for(Primate p : primateList){
+			if(p.getMyGroup()==0)group.add(p);
+		}
+
+		//getGroupCenter
+		Coordinate center = calculateGroupCenter();
+
+		//calculate sd of ellipse (source arcgis standard deviation ellipse)
+		double xd = 0,yd=0;
+		for(Primate g: group){
+			xd = xd + Math.pow( (g.getCoord().x-center.x)*Math.cos(angleE)-(g.getCoord().y-center.y)*Math.sin(angleE),2);
+			yd = yd + Math.pow( (g.getCoord().x-center.x)*Math.sin(angleE)-(g.getCoord().y-center.y)*Math.cos(angleE),2);
+		}
+		
+		xd = Math.pow(xd/(double)group.size(),0.5);
+		yd = Math.pow(yd/(double)group.size(),0.5);
+		
+		double sl = 0;
+		if(xd>=yd){
+			sl=yd/xd;
+		} else{
+			sl=xd/yd;
+		}
+		
+		System.out.println("shape = "+(1-sl));
+		
+		return 1-sl;
+
+	}
+
+	/*//Calculate the ratio of length to width based on max
+	double maxX=-99999, minX=99999, maxY = -999999, minY=999999;
+	for(RealVector v : rotatedPoints){
+
+		double x = v.getEntry(0);
+		double y = v.getEntry(1);
+
+		if(x>maxX)maxX=x;
+		if(x<minX)minX=x;
+		if(y>maxY)maxY=y;
+		if(y<minY)minY=y;
+
+	}
+
+	lengthWidth = (maxY-minY)/(maxX-minX);
+	
 	private double calculateLegthWidthRatio(){
 
 		double lengthWidth = -1;
@@ -179,44 +308,31 @@ public class Watcher {
 		RealVector directionOfTravel = new ArrayRealVector(2,0);
 		directionOfTravel.addToEntry(0, xsum/(double)group.size());
 		directionOfTravel.addToEntry(1, ysum/(double)group.size());
-		
-		System.out.println("Direction of travel of the group = "+directionOfTravel.toString());
 
+		System.out.println("Direction of travel of the group = "+directionOfTravel.toString());
+		directionOfTravel.unitize();
+		System.out.println("Direction of travel of the group unit vector = "+directionOfTravel.toString());
 
 		//subtract all the points towards the center and rotate
 		ArrayList<RealVector> rotatedPoints = new ArrayList<RealVector>();
 		for(Primate g: group){
 
-			//create a vector for the individual based on location from the center
+			//individual location based on the center of the group
 			double x = g.getCoord().x-center.x;
 			double y = g.getCoord().y-center.y;
+
+			//calculate angle of rotation
 			double fie = Math.atan2(y, x);
+			fie = -Math.atan2(directionOfTravel.getEntry(1),directionOfTravel.getEntry(0));
 
+			//Rotate point
 			RealVector p1 = new ArrayRealVector(2,0);
-			p1.addToEntry(0,x*Math.cos(fie) - y*Math.sin(fie) );
+			p1.addToEntry(0, x*Math.cos(fie) - y*Math.sin(fie));
 			p1.addToEntry(1, y*Math.cos(fie) + x*Math.sin(fie));
-
 			rotatedPoints.add(p1);
 
 		}
 
-		/*//Calculate the ratio of length to width based on max
-		double maxX=-99999, minX=99999, maxY = -999999, minY=999999;
-		for(RealVector v : rotatedPoints){
-
-			double x = v.getEntry(0);
-			double y = v.getEntry(1);
-
-			if(x>maxX)maxX=x;
-			if(x<minX)minX=x;
-			if(y>maxY)maxY=y;
-			if(y<minY)minY=y;
-
-		}
-
-		lengthWidth = (maxY-minY)/(maxX-minX);
-		 */
-		
 		//Calculate the ratio of length to width based on SD
 		double SDx=0,SDy=0;//mean = 0;
 		for(RealVector v : rotatedPoints){
@@ -224,12 +340,16 @@ public class Watcher {
 			SDy = SDy+Math.pow(0-v.getEntry(1),2);
 		}
 
-		lengthWidth = (SDy)/(SDx);//N cancels out
-
+		if(SDy>=SDx){
+			lengthWidth = ( Math.pow(SDy/(double)rotatedPoints.size(),0.5) )/( Math.pow(SDx/(double)rotatedPoints.size(),0.5) );//N cancels out
+		}else{
+			lengthWidth = ( Math.pow(SDx/(double)rotatedPoints.size(),0.5) )/( Math.pow(SDy/(double)rotatedPoints.size(),0.5) );//N cancels out
+		}
+		
 		return lengthWidth;
 
 	}
-
+	 */
 
 	private static void recordFood(){
 		ArrayList foodT = new ArrayList<Double>();
@@ -322,8 +442,13 @@ public class Watcher {
 
 		double MSE_dist=-1;
 		int numbPrimates=0;
+		
+		ArrayList<Primate> group = new ArrayList<Primate>();
+		for(Primate p : primateList){
+			if(p.getMyGroup()==0)group.add(p);
+		}
 
-		for (Primate p: ModelSetup.primatesAll){
+		for (Primate p: group){
 			MSE_dist = MSE_dist + Math.pow(p.getCoord().distance(groupCenter),2);
 			numbPrimates++;
 		}
@@ -379,9 +504,18 @@ public class Watcher {
 		avg_speed = avg_speed / speeds.size();
 
 		System.out.println("speed = "+avg_speed+"  spread = "+avg_spread);
+		
+		
 
 		try {
+			//setup headers
+			summaryStats_out.append("time,x,y,speed,spread,perpendicularity,shape,rankF");
+			summaryStats_out.newLine();
+			
+			//write out data
 			for(int i = 0 ; i<centers.size();i++){
+				summaryStats_out.append(((Double)(i*Parameter.recordingFreq)).toString());
+				summaryStats_out.append(",");
 				summaryStats_out.append(((Double)centers.get(i).x).toString());
 				summaryStats_out.append(",");
 				summaryStats_out.append(((Double)centers.get(i).y).toString());
@@ -390,6 +524,13 @@ public class Watcher {
 				summaryStats_out.append(",");
 				summaryStats_out.append(((Double)spreads.get(i)).toString());
 				summaryStats_out.append(",");
+				summaryStats_out.append(((Double)this.perpen.get(i)).toString());
+				summaryStats_out.append(",");
+				summaryStats_out.append(((Double)this.shapeRatio.get(i)).toString());
+				summaryStats_out.append(",");
+				summaryStats_out.append(  ((Double)((this.shapeRatio.get(i))*(this.perpen.get(i)))).toString());
+				summaryStats_out.append(",");
+				
 				summaryStats_out.newLine();
 			}
 		} catch (IOException e) {

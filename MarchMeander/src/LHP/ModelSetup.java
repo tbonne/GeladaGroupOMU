@@ -162,6 +162,8 @@ public class ModelSetup implements ContextBuilder<Object>{
 		//center of group (fixed)
 		double xCenter =xdim/2;//*Parameter.cellSize/3;//0;//xDist.nextDouble();//75;//1000;// 75;
 		double yCenter =0;//0;//yDist.nextDouble();// -75;//-1000;//-75;
+		//double yoffset = 10;
+		//double xoffset = 0;
 
 		for(int i = 0 ;i<Parameter.numbOfGroups;i++ ){
 
@@ -169,12 +171,16 @@ public class ModelSetup implements ContextBuilder<Object>{
 			int groupSize = Parameter.groupSize;
 
 			boolean isMale = true;
-
+			
 			//add individuals
 			for (int j = 0; j < groupSize; j++){
 
 				//add individual
 				Coordinate coord=SimUtils.generateCoordAround(xCenter,yCenter);
+				//Coordinate coord= new Coordinate(xCenter+RandomHelper.nextDouble()*0.001,yCenter+RandomHelper.nextDouble()*0.001);
+				//xCenter = xCenter + xoffset;
+				//yCenter = yCenter + yoffset;
+				
 				Baboon rc = new Baboon(primatesAdded++,coord,groupSize,isMale,i);
 				isMale=false;
 				context.add(rc);

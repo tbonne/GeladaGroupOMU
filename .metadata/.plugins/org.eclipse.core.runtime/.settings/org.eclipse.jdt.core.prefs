@@ -1,4 +1,5 @@
 eclipse.preferences.version=1
+org.eclipse.jdt.core.classpathVariable.ARCGIS_RUNTIME_FOR_JAVA_TOOLKIT=C\:/RepastSimphony-2.3.1/eclipse/configuration/org.eclipse.osgi/496/0/.cp/lib/
 org.eclipse.jdt.core.classpathVariable.ECLIPSE_HOME=C\:/RepastSimphony-2.3.1/eclipse/
 org.eclipse.jdt.core.classpathVariable.JRE_LIB=C\:/Program Files/Java/jdk1.8.0_05/jre/lib/rt.jar
 org.eclipse.jdt.core.classpathVariable.JRE_SRC=C\:/Program Files/Java/jdk1.8.0_05/src.zip
